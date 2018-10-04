@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<screen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/xml-screen-1.1.xsd"
+        standalone="true"
+        default-menu-include="false"
+        require-authentication="anonymous-all">
+
+    <transition name="saveInMemory" read-only="true" >
+        <actions>
+            <script>
+                //import org.janusgraph.core.JanusGraphFactory
+                //import org.janusgraph.core.JanusGraph
+                org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger("saveInMemory")
+                logger.info("in saveInMemory (transition)")
+                ec.resource.script("component://graph/script/sandbox/saveInMemory.groovy", null)
+                ec.web.sendJsonResponse("done")
+            </script>
+
+
+        </actions>
+        <default-response type="none"/>
+    </transition>
+
+    <transition name="loadInMemory" read-only="true" >
+        <actions>
+            <script>
+            //import org.janusgraph.core.JanusGraphFactory
+            //import org.janusgraph.core.JanusGraph
+            org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger("loadInMemory")
+            logger.info("in loadInMemory (transition)")
+            ec.resource.script("component://graph/script/sandbox/loadInMemory.groovy", null)
+            ec.web.sendJsonResponse("done")
+            </script>
+
+
+        </actions>
+        <default-response type="none"/>
+    </transition>
+
+    <subscreens default-item="" >
+    </subscreens>
+    <widgets>
+        <render-mode>
+            <text type="html" >
+                Ofnan default screen
+            </text>
+        </render-mode>
+    </widgets>
+</screen>

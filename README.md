@@ -1,1 +1,1 @@
-# janusgraph
+# graph

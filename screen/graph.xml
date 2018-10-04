@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<screen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/xml-screen-1.1.xsd"
+        standalone="true"
+        default-menu-include="false"
+        require-authentication="anonymous-all">
+    <always-actions>
+        <!-- No JS or CSS files referenced here, just setup lists for subscreens to add to in pre-actions -->
+        <set field="html_scripts" from="new LinkedHashSet()"/>
+        <set field="footer_scripts" from="new LinkedHashSet()"/>
+
+        <!-- See WebrootThemeData.xml for CSS references -->
+        <set field="html_stylesheets" from="new LinkedHashSet()"/>
+    </always-actions>
+    <subscreens default-item="" >
+        <subscreens-item name="test" location="component://graph/screen/graph/test.xml"/>
+        <subscreens-item name="sandbox" location="component://graph/screen/graph/sandbox.xml"/>
+    </subscreens>
+    <widgets>
+        <render-mode>
+            <text type="html" >
+                Ofnan default screen
+            </text>
+        </render-mode>
+    </widgets>
+</screen>

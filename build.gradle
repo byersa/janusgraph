@@ -1,0 +1,291 @@
+/*
+ * This Work is in the public domain and is provided on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied,
+ * including, without limitation, any warranties or conditions of TITLE,
+ * NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A PARTICULAR PURPOSE.
+ * You are solely responsible for determining the appropriateness of using
+ * this Work and assume any risks associated with your use of this Work.
+ *
+ * This Work includes contributions authored by David E. Jones, not as a
+ * "work for hire", who hereby disclaims any copyright to the same.
+ */
+
+tasks.withType(JavaCompile) {
+    options.compilerArgs << "-Xlint:unchecked"
+}
+
+apply plugin: 'groovy'
+
+apply plugin: 'com.github.ben-manes.versions'
+
+buildscript {
+  repositories { jcenter() }
+  dependencies { classpath 'com.github.ben-manes:gradle-versions-plugin:0.12.0' }
+}
+
+dependencyUpdates.resolutionStrategy = {
+  componentSelection { rules ->
+    rules.all { ComponentSelection selection ->
+      boolean rejected = ['alpha', 'beta', 'rc', 'cr', 'm'].any { qualifier ->
+        selection.candidate.version ==~ /(?i).*[.-]${qualifier}[.\d-]*/
+      }
+      if (rejected) {
+        selection.reject('Release candidate')
+      }
+    }
+  }
+}
+
+//import org.ajoberstar.grgit.*
+
+sourceCompatibility = '1.8'
+def moquiDir = file(projectDir.absolutePath + '/../../..')
+def frameworkDir = file(moquiDir.absolutePath + '/framework')
+def moquiUtilDir = file(moquiDir.absolutePath + '/moqui-util')
+archivesBaseName = 'janusgraph'
+//sourceSets.main.output.classesDir = file(projectDir.absolutePath + '/classes' )
+
+// maybe in the future: repositories { mavenCentral() }
+repositories {
+    flatDir name: 'frameworklib', dirs: frameworkDir.absolutePath + '/lib'
+    //flatDir name: 'camellib', dirs: frameworkDir.absolutePath + '/lib/camel'
+    //flatDir name: 'searchlib', dirs: frameworkDir.absolutePath + '/lib/search'
+    flatDir name: 'moquiLib', dirs: frameworkDir.absolutePath + '/build/libs'
+    flatDir name: 'moquiUtilLib', dirs: moquiUtilDir.absolutePath + '/build/libs'
+    flatDir name: 'moquiRuntimeLib', dirs: moquiDir.absolutePath + '/runtime/lib'
+    flatDir name: 'locallib', dirs: projectDir.absolutePath + '/lib'
+    jcenter() // http://jcenter.bintray.com
+//    mavenCentral() //https://oss.sonatype.org/service/local/staging/deploy/maven2/
+//    maven {
+//        url 'https://oss.sonatype.org/content/repositories/snapshots/'
+////        //url 'https://oss.sonatype.org/service/local/staging/deploy/maven2/'
+//    }
+}
+
+sourceSets {
+
+}
+
+dependencies {
+
+    // Groovy
+    compile 'org.codehaus.groovy:groovy:2.5.0' // Apache 2.0
+    compile 'org.codehaus.groovy:groovy-dateutil:2.5.0' // Apache 2.0
+    compile 'org.codehaus.groovy:groovy-json:2.5.0' // Apache 2.0
+    compile 'org.codehaus.groovy:groovy-templates:2.5.0' // Apache 2.0
+    compile 'org.codehaus.groovy:groovy-xml:2.5.0' // Apache 2.0
+    //compile project(":moqui-util")
+    //compile project(":framework")
+    compile 'org.moqui:moqui-framework:2.1.1-rc2'
+
+    compile name: 'activation', version: '1.1'
+    compile name: 'btm', version: '3.0.0-SNAPSHOT'
+    compile name: 'cache-api', version: '1.0.0'
+    compile name: 'caffeine', version: '2.3.1'
+    compile name: 'commons-beanutils', version: '1.9.3'
+    compile name: 'commons-codec', version: '1.10'
+    compile name: 'commons-collections', version: '3.2.2'
+    compile name: 'commons-configuration2', version: '2.3'
+    compile name: 'commons-configuration', version: '1.10'
+    compile name: 'commons-csv', version: '1.5'
+    compile name: 'commons-digester', version: '2.1'
+    compile name: 'commons-email', version: '1.5'
+    compile name: 'commons-fileupload', version: '1.3.3'
+    compile name: 'commons-io', version: '2.6'
+    compile name: 'commons-lang', version: '2.6'
+    compile name: 'commons-lang3', version: '3.7'
+    compile name: 'commons-logging', version: '1.2'
+    compile name: 'commons-text', version: '1.0'
+    compile name: 'commons-validator', version: '1.6'
+    compile name: 'cron-utils', version: '5.0.5'
+    compile name: 'cups4j', version: '0.6.4'
+    compile name: 'dom4j', version: '1.6.1'
+    compile name: 'dse-java-driver-mapping', version: '1.7.0'
+    compile name: 'dse-java-driver-core', version: '1.7.0'
+    compile name: 'dse-java-driver-extras', version: '1.7.0'
+    compile name: 'dse-java-driver-graph', version: '1.7.0'
+    compile name: 'exp4j', version: '0.4.8'
+    compile name: 'elasticsearch-rest-client', version: '6.0.1'
+    compile name: 'flexmark', version: '0.32.20'
+    compile name: 'flexmark-ext-tables', version: '0.32.20'
+    compile name: 'flexmark-ext-toc', version: '0.32.20'
+    compile name: 'flexmark-formatter', version: '0.32.20'
+    compile name: 'flexmark-util', version: '0.32.20'
+    compile name: 'freemarker', version: '2.3.28'
+    compile name: 'gmetric4j', version: '1.0.3'
+    compile name: 'gremlin-core', version: '3.3.3'
+    compile name: 'gremlin-driver', version: '3.3.3'
+    compile name: 'gremlin-groovy', version: '3.3.3'
+    compile name: 'gremlin-shaded', version: '3.3.3'
+    compile name: 'guava', version: '25.1-jre'
+    compile name: 'h2', version: '1.4.197'
+    compile name: 'high-scale-lib', version: '1.1.4'
+    compile name: 'hppc', version: '0.7.1'
+    compile name: 'httpclient', version: '4.5.5'
+    compile name: 'httpcore', version: '4.4.10'
+    compile name: 'httpcore-nio', version: '4.4.10'
+    compile name: 'httpasyncclient', version: '4.1.4'
+    compile name: 'httpasyncclient-cache', version: '4.1.4'
+    compile name: 'ivy', version: '2.3.0'
+    compile name: 'jackson-annotations', version: '2.9.0'
+    compile name: 'jackson-core', version: '2.9.5'
+    compile name: 'jackson-databind', version: '2.9.5'
+    compile group: 'org.janusgraph.core', name: 'janusgraph-core', version: '0.3.0'
+    compile group: 'org.janusgraph.cql', name: 'janusgraph-cql', version: '0.3.0'
+    compile group: 'org.janusgraph.es', name: 'janusgraph-es', version: '0.3.0'
+    compile group: 'com.sleepycat', name: 'je', version: '7.5.11'
+    compile name: 'javapoet', version: '1.8.0'
+    //compile name: 'javassist', version: '3.22.0-GA'
+    compile 'org.javassist:javassist:3.22.0-GA' // Apache 2.0
+    //compile name: 'javassist', version: '3.9.0.GA'
+    compile name: 'javatuples', version: '1.2'
+    compile name: 'javax.json', version: '1.0'
+    compile name: 'javax.mail', version: '1.6.1'
+    compile name: 'javax.servlet-api', version: '3.1.0'
+    compile name: 'javax.websocket-api', version: '1.0'
+    compile name: 'jbcrypt', version: '0.4'
+    compile name: 'jcabi-log', version: '0.14'
+    compile name: 'jcabi-manifests', version: '1.1'
+    compile name: 'jcl-over-slf4j', version: '1.7.21'
+    compile name: 'jcr', version: '2.0'
+    compile name: 'jetty-client', version: '9.4.9.v20180320'
+    compile name: 'jetty-http', version: '9.4.9.v20180320'
+    compile name: 'jetty-io', version: '9.4.9.v20180320'
+    compile name: 'jetty-proxy', version: '9.4.9.v20180320'
+    compile name: 'jetty-util', version: '9.4.9.v20180320'
+    compile name: 'jline', version: '2.12'
+    compile name: 'jsoup', version: '1.11.3'
+    compile name: 'jsr305', version: '3.0.0'
+    compile name: 'jta', version: '1.1'
+    compile name: 'log4j-api', version: '2.9.1'
+    compile name: 'log4j-core', version: '2.9.1'
+    compile name: 'log4j-slf4j-impl', version: '2.9.1'
+    compile name: 'metrics-core', version: '3.0.1'
+    compile name: 'metrics-ganglia', version: '3.0.1'
+    compile name: 'metrics-graphite', version: '3.0.1'
+    compile name: 'moqui-framework', version: '2.1.1-rc2'
+    compile name: 'moqui-util', version: '1.0.1'
+    compile name: 'netty-all', version: '4.1.28.Final'
+    compile name: 'noggit', version: '0.6'
+    compile name: 'oncrpc', version: '1.0.7'
+    compile name: 'reflections', version: '0.9.10'
+    compile name: 'shiro-core', version: '1.4.0'
+    compile name: 'shiro-web', version: '1.4.0'
+    compile name: 'slf4j-api', version: '1.7.25'
+    compile name: 'snakeyaml', version: '1.21'
+    compile name: 'spatial4j', version: '0.6'
+    compile name: 'subethasmtp', version: '3.1.7'
+    compile name: 'tinkergraph-gremlin', version: '3.3.3'
+    compile name: 'vavr', version: '0.9.2'
+    compile name: 'ws-commons-util', version: '1.0.2'
+    compile name: 'xml-apis', version: '1.0.b2'
+    compile name: 'xmlrpc-common', version: '3.1.3'
+    compile name: 'xmlrpc-server', version: '3.1.3'
+    compile 'org.apache.tinkerpop:gremlin-core:3.3.3'
+    compile 'org.apache.tinkerpop:gremlin-shaded:3.3.3'
+//    compile 'org.yaml:snakeyaml:1.15'
+//    compile 'org.javatuples:javatuples:1.2'
+//    compile 'com.jcabi:jcabi-manifests:1.1'
+//    compile 'com.jcabi:jcabi-log:0.14'
+//    compile 'com.squareup:javapoet:1.8.0'
+//    compile 'net.objecthunter:exp4j:0.4.8'
+//    compile 'org.slf4j:jcl-over-slf4j:1.7.21'
+//    compile 'org.apache.tinkerpop:gremlin-groovy:3.3.2'
+//    compile 'org.apache.ivy:ivy:2.3.0'
+//    compile 'org.codehaus.groovy:groovy:2.4.14'
+//    compile 'org.codehaus.groovy:groovy-groovysh:2.4.14'
+//    compile 'org.codehaus.groovy:groovy-console:2.4.14'
+//    compile 'org.codehaus.groovy:groovy-swing:2.4.14'
+//    compile 'org.codehaus.groovy:groovy-templates:2.4.14'
+//    compile 'org.codehaus.groovy:groovy-xml:2.4.14'
+//    compile 'jline:jline:2.12'
+//    compile 'org.codehaus.groovy:groovy-json:2.4.14'
+//    compile 'org.codehaus.groovy:groovy-jsr223:2.4.14'
+//    compile 'org.apache.commons:commons-lang3:3.3.1'
+//    compile 'org.mindrot:jbcrypt:0.4'
+//    compile 'com.github.ben-manes.caffeine:caffeine:2.3.1'
+//    compile 'org.apache.tinkerpop:tinkergraph-gremlin:3.3.2'
+//    compile 'org.glassfish:javax.json:1.0'
+//    compile 'com.codahale.metrics:metrics-core:3.0.1'
+//    compile 'com.codahale.metrics:metrics-ganglia:3.0.1'
+//    compile 'info.ganglia.gmetric4j:gmetric4j:1.0.3'
+//    compile 'com.codahale.metrics:metrics-graphite:3.0.1'
+//    compile 'org.reflections:reflections:0.9.9-RC1'
+//    compile 'org.javassist:javassist:3.16.1-GA'
+//    compile 'dom4j:dom4j:1.6.1'
+//    compile 'xml-apis:xml-apis:1.0.b2'
+//    compile 'org.locationtech.spatial4j:spatial4j:0.6'
+//    compile 'commons-collections:commons-collections:3.2.2'
+//    compile 'commons-configuration:commons-configuration:1.10'
+//    compile 'commons-lang:commons-lang:2.6'
+//    compile 'commons-logging:commons-logging:1.1.1'
+//    compile 'commons-io:commons-io:2.3'
+//    compile 'commons-codec:commons-codec:1.7'
+//    compile 'com.google.guava:guava:18.0'
+//    compile 'com.carrotsearch:hppc:0.7.1'
+//    compile 'com.github.stephenc.high-scale-lib:high-scale-lib:1.1.4'
+//    compile 'com.google.code.findbugs:jsr305:3.0.0'
+//    compile 'org.noggit:noggit:0.6'
+//    compile 'org.apache.commons:commons-text:1.0'
+//    compile 'org.slf4j:slf4j-api:1.7.12'
+    // ========== test dependencies ==========
+    //testCompile project(':framework').configurations.testCompile.allDependencies
+    testCompile 'org.moqui:moqui-framework:2.1.1-rc2'
+    testCompile name: 'mysql-connector-java', version: '8.0.11'
+    // spock-core depends on groovy-all but we are including selected groovy modules, so don't get its dependencies
+    testCompile module('org.spockframework:spock-core:1.1-groovy-2.4') // Apache 2.0
+    testCompile 'junit:junit:4.12' // Apache 2.0
+    testCompile 'org.hamcrest:hamcrest-core:1.3' // BSD 3-Clause
+}
+
+// by default the Java plugin runs test on build, change to not do that (only run test if explicit task)
+check.dependsOn.remove('test')
+build.dependsOn.remove('test')
+
+test {
+    systemProperty 'moqui.runtime', '../..'
+    systemProperty 'moqui.conf', 'conf/MoquiDevConf.xml'
+    systemProperty 'moqui.init.static', 'true'
+
+    testLogging.showStandardStreams = true
+
+    classpath += files(sourceSets.main.output.classesDir)
+    classpath += files(projectDir.absolutePath)
+    //classpath += fileTree(dir: projectDir.absolutePath,
+    //        includes: ['data/**', 'entity/**', 'screen/**', 'service/**', 'template/**', 'xsd/**'])
+
+    beforeTest { descriptor ->
+        logger.lifecycle("Running test: ${descriptor}")
+    }
+}
+
+task copyJanus(type: Copy) {
+    from configurations.compile
+    into 'lib'
+}
+jar {
+    // this is necessary otherwise jar won't build when war plugin is applied
+    destinationDir = file(projectDir.absolutePath + '/lib' )
+    enabled = true
+    appendix = 'janusgraph'
+    version = '0.1.0'
+    manifest { attributes 'Implementation-Title': 'JanusGraph Entity', 'Implementation-Version': '0.1.0' }
+    from sourceSets.main.output
+//    from configurations.runtimeClasspath.
+//            findAll { it.name.endsWith('jar') }.
+//            collect { zipTree(it) }
+}
+
+task uberJar(type: Jar) {
+    destinationDir = file(projectDir.absolutePath + '/lib' )
+    enabled = true
+    appendix = 'janusgraph'
+    version = '0.1.0'
+    manifest { attributes 'Implementation-Title': 'JanusGraph Entity', 'Implementation-Version': '0.1.0' }
+
+    from sourceSets.main.output
+    from configurations.runtimeClasspath.
+            findAll { it.name.endsWith('jar') }.
+            collect { zipTree(it) }
+}
+
