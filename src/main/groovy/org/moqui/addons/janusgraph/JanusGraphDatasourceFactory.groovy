@@ -138,7 +138,7 @@ class JanusGraphDatasourceFactory implements EntityDatasourceFactory {
         return this
     }
 
-    GraphTraversalSource getTraversal() {
+    GraphTraversalSource getTraversalSource() {
         GraphTraversalSource g = janusGraph.traversal()
         //GraphTraversalSource g = graph.traversal().withRemote(DriverRemoteConnection.using(cluster, "g"))
         //ResourceReference remoteRef = this.efi.ecfi.resourceFacade.getLocationReference("component://graph/conf/remote-graph.properties")

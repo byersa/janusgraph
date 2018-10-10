@@ -308,14 +308,14 @@ class JanusGraphUtils {
         return client
     }
 
-    static GraphTraversalSource getTraversal (ExecutionContext ec) {
+    static GraphTraversalSource getTraversalSource (ExecutionContext ec) {
         EntityFacadeImpl efi = ec.getEntityFacade()
-        logger.info("JanusGraphUtils::getTraversal, efi: ${efi}")
+        logger.info("JanusGraphUtils::getTraversalSource, efi: ${efi}")
         JanusGraphDatasourceFactory edfi = efi.getDatasourceFactory("transactional_nosql") as JanusGraphDatasourceFactory
-        logger.info("JanusGraphUtils::getTraversal, edfi: ${edfi}")
+        logger.info("JanusGraphUtils::getTraversalSource, edfi: ${edfi}")
         //Graph jG = JanusGraphUtils.getDatabase(ec)
-        GraphTraversalSource g = edfi.getTraversal()
-        logger.info("JanusGraphUtils::getTraversal, g: ${g}")
+        GraphTraversalSource g = edfi.getTraversalSource()
+        logger.info("JanusGraphUtils::getTraversalSource, g: ${g}")
         return g
     }
 
