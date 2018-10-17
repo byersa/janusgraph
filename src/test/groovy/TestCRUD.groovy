@@ -155,6 +155,7 @@ class TestCRUD extends Specification {
 
         cleanup:
         g.V('${id}').drop()
+        g.close()
     }
 
     def "update_PartyContactInfo"(){
@@ -191,6 +192,7 @@ class TestCRUD extends Specification {
 
         cleanup:
         g.V(id).drop()
+        g.close()
 
     }
 
@@ -226,6 +228,7 @@ class TestCRUD extends Specification {
 
         then:
         dropped
+        g.close()
 
     }
 

@@ -35,7 +35,7 @@ import org.apache.tinkerpop.gremlin.structure.Direction
 import org.apache.tinkerpop.gremlin.driver.Client
 import org.apache.tinkerpop.gremlin.driver.ResultSet
 
-import org.moqui.addons.graph.JanusGraphUtils
+import org.moqui.addons.janusgraph.JanusGraphUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -60,7 +60,7 @@ class TestStoreVertexAndEdge extends Specification {
     @Shared
     Timestamp nowTimestamp
 
-    org.apache.tinkerpop.gremlin.driver.Client client
+    //org.apache.tinkerpop.gremlin.driver.Client client
 
     def setupSpec() {
         // init the framework, get the ec
@@ -105,12 +105,12 @@ class TestStoreVertexAndEdge extends Specification {
     }
 
     def setup() {
-        client = JanusGraphUtils.getClient(ec)
+        //client = JanusGraphUtils.getClient(ec)
         return
     }
 
     def cleanup() {
-        client.close()
+        //client.close()
         return
     }
 
@@ -123,6 +123,10 @@ class TestStoreVertexAndEdge extends Specification {
     }
 
     def "test_storeVertexAndEdge"() {
+
+        setup:
+        GraphTraversalSource g = JanusGraphUtils.getTraversalSource (ec)
+
         when:
         pci = pci.create()
         logger.info("in test_storeVertexAndEdge, pci (3): ${pci}")
@@ -142,15 +146,15 @@ class TestStoreVertexAndEdge extends Specification {
                 pci.getVertex(), null, "agent-client", edgeProps, vertexProps, null, ec
         )
 
-        String gremlin = "g.V('${testEntityValue.getVertex().id()}').next()"
-        logger.info("in TestStoreVertexAndEdge,  gremlin: ${gremlin}")
-        org.apache.tinkerpop.gremlin.driver.ResultSet results = client.submit(gremlin)
-        org.apache.tinkerpop.gremlin.structure.Vertex vrtx = results.one().getVertex()
+        org.apache.tinkerpop.gremlin.structure.Vertex vrtx = g.V(testEntityValue.getVertex().id()).next()
         logger.info("in TestStoreVertexAndEdge,  vrtx: ${vrtx}")
 
         then:
         assert vrtx
         return
+
+        cleanup:
+        g.close()
     }
 
 }

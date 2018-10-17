@@ -11,6 +11,7 @@
  */
 package org.moqui.addons.janusgraph
 
+import static org.apache.tinkerpop.gremlin.process.traversal.P.*
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource
 import org.apache.tinkerpop.gremlin.process.traversal.P
@@ -50,6 +51,7 @@ import org.moqui.impl.context.ExecutionContextImpl
 
 import org.moqui.addons.janusgraph.JanusGraphEntityValue
 import org.moqui.addons.janusgraph.JanusGraphDatasourceFactory
+import org.moqui.addons.janusgraph.JanusGraphUtils
 import org.janusgraph.core.JanusGraph
 import org.moqui.impl.context.ExecutionContextFactoryImpl
 
@@ -81,90 +83,110 @@ class JanusGraphEntityFind { //extends EntityFindBase
 
     EntityValue one() throws EntityException {
 
+        GraphTraversalSource g = JanusGraphUtils.getTraversalSource(efi)
+        GraphTraversal gts
         long startTime = System.currentTimeMillis()
         List retList = null
-        StringBuilder sb = StringBuilder.newInstance()
+    try {
         if(fromVertexId) {
-            sb << "g.V('${fromVertexId}')"
+            gts = g.V(fromVertexId)
         } else {
-            sb << "g.V()"
+            gts = g.V()
         }
         if (vertexProperties && vertexProperties.size()) {
             vertexProperties.each { tuple ->
-                sb << applyPredicate(tuple[0], tuple[1], tuple[2])
+                gts = applyPredicate(tuple[0], tuple[1], tuple[2], gts)
             }
         }
-        sb << ".toList()"
-        String gremlin = sb.toString()
-        org.apache.tinkerpop.gremlin.driver.ResultSet results = client.submit(gremlin.toString());
-        CompletableFuture <org.apache.tinkerpop.gremlin.structure.Vertex> cf = results.all()
-        List <Result> resultList = cf.get()
+    } catch (Exception e) {
+        logger.error(e.getMessage())
+        return null
+    }
+
+    try {
+        List <org.apache.tinkerpop.gremlin.structure.Vertex> resultList = gts.toList()
         EntityValue entityValue
         EntityDefinition ed
         org.apache.tinkerpop.gremlin.structure.Vertex vtx
-        org.apache.tinkerpop.gremlin.driver.Result result
         if (resultList.size()) {
-            result = resultList[0]
-            vtx = result.getVertex()
+            vtx = resultList[0]
             ed = efi.getEntityDefinition(vtx.label())
             // TODO: if no ed then throw exception
             entityValue = new JanusGraphEntityValue(ed, efi, vtx)
-            return entityValue
         } else {
-            return null
+            entityValue = null
         }
+    } catch (Exception e) {
+        logger.error(e.getMessage())
+        return null
+    }
+        g.tx().commit()
+        g.close()
+        return entityValue
     }
 
     /** @see org.moqui.entity.EntityFind#list() */
     List <EntityValue> list() {
+
+        GraphTraversalSource g = JanusGraphUtils.getTraversalSource(efi)
+        GraphTraversal gts
+
         long startTime = System.currentTimeMillis()
         //EntityDefinition ed = this.getEntityDef()
         List retList = null
+        List <org.apache.tinkerpop.gremlin.structure.Vertex> resultList
         //JanusGraphEntityValue entValue = null
         //EntityList entList = new EntityListImpl(this.efi)
         //logger.info("JanusGraphEntityFind.list efi: ${this.efi}")
-        StringBuilder sb = StringBuilder.newInstance()
-        if(fromVertexId) {
-            sb << "g.V('${fromVertexId}')"
-        } else {
-            sb << "g.V()"
-        }
-        if(edgeLabel) {
-            sb << ".outE('${edgeLabel}')"
-        } else {
-            sb << ".outE()"
-        }
-        if (edgeProperties && edgeProperties.size()) {
-            edgeProperties.each { tuple ->
-                sb << applyPredicate(tuple[0], tuple[1], tuple[2])
+        try {
+            if (fromVertexId) {
+                gts = g.V(fromVertexId)
+            } else {
+                gts = g.V()
             }
-        }
-        if (vertexLabel) {
-            sb << ".inV().hasLabel('${vertexLabel}')"
-        } else {
-            sb << ".inV()"
-        }
-        if (vertexProperties && vertexProperties.size()) {
-            vertexProperties.each { tuple ->
-                sb << applyPredicate(tuple[0], tuple[1], tuple[2])
+            if (edgeLabel) {
+                gts = gts.outE(edgeLabel)
+            } else {
+                gts = gts.outE()
             }
+            if (edgeProperties && edgeProperties.size()) {
+                edgeProperties.each { tuple ->
+                    gts = applyPredicate(tuple[0], tuple[1], tuple[2], gts)
+                }
+            }
+            if (vertexLabel) {
+                gts = gts.inV().hasLabel(vertexLabel)
+            } else {
+                gts = gts.inV()
+            }
+            if (vertexProperties && vertexProperties.size()) {
+                vertexProperties.each { tuple ->
+                    gts = applyPredicate(tuple[0], tuple[1], tuple[2], gts)
+                }
+            }
+            resultList = gts.toList()
+        } catch (Exception e) {
+            logger.error(e.getMessage())
+            return null
         }
-        sb << ".toList()"
+
         EntityValue entityValue
-        String gremlin = sb.toString()
-        org.apache.tinkerpop.gremlin.driver.ResultSet results = client.submit(gremlin.toString())
-        CompletableFuture <org.apache.tinkerpop.gremlin.structure.Vertex> cf = results.all()
-        List <Result> resultList = cf.get()
         EntityDefinition ed
         org.apache.tinkerpop.gremlin.structure.Vertex vtx
         List <EntityValue> entityValueList = new ArrayList()
-        resultList.each {result ->
-            vtx = result.getVertex()
-            ed = efi.getEntityDefinition(vtx.label())
-            // TODO: if no ed then throw exception
-            entityValue = new JanusGraphEntityValue(ed, efi, vtx)
-            entityValueList << entityValue
+        try {
+            resultList.each {v ->
+                ed = efi.getEntityDefinition(v.label())
+                // TODO: if no ed then throw exception
+                entityValue = new JanusGraphEntityValue(ed, efi, v)
+                entityValueList << entityValue
+            }
+        } catch (Exception e) {
+            logger.error(e.getMessage())
+            return null
         }
+        g.tx().commit()
+        g.close()
         return entityValueList
     }
 
@@ -181,55 +203,57 @@ class JanusGraphEntityFind { //extends EntityFindBase
         return this.efi
     }
 
-    String applyPredicate( String propName, String predicateText, Object propValue) {
+    GraphTraversal applyPredicate( String propName, String predicateText, Object propValue, GraphTraversal gts) {
 
-        String predicateValue
-        if (propValue instanceof String) {
-            predicateValue = "'${propValue}'"
-        } else if (propValue instanceof Float) {
-            predicateValue = "${propValue}f"
-        } else {
-            predicateValue = "${propValue}"
-        }
+        GraphTraversal newGts
+        Object predicateValue = propValue
+//        if (propValue instanceof String) {
+//            predicateValue = "'${propValue}'"
+//        } else if (propValue instanceof Float) {
+//            predicateValue = "${propValue}f"
+//        } else {
+//            predicateValue = "${propValue}"
+//        }
 
         switch (predicateText) {
             case "eq":
-                return ".has('${propName}',  eq(${predicateValue}))"
+                newGts =  gts.has(propName,  eq(predicateValue))
                 break
             case "neq":
-                return ".has('${propName}',  neq(${predicateValue}))"
+                newGts =  gts.has(propName,  neq(predicateValue))
                 break
             case "lt":
-                return ".has('${propName}',  lt(${predicateValue}))"
+                newGts =  gts.has(propName,  lt(predicateValue))
                 break
             case "lte":
-                return ".has('${propName}',  lte(${predicateValue}))"
+                newGts =  gts.has(propName,  lte(predicateValue))
                 break
             case "gt":
-                return ".has('${propName}',  gt(${predicateValue}))"
+                newGts =  gts.has(propName,  gt(predicateValue))
                 break
             case "gte":
-                return ".has('${propName}',  gte(${predicateValue}))"
+                newGts =  gts.has(propName,  gte(predicateValue))
                 break
             case "inside":
-                return ".has('${propName}',  inside(${predicateValue}))"
+                newGts =  gts.has(propName,  inside(predicateValue))
                 break
             case "outside":
-                return ".has('${propName}',  outside(${predicateValue}))"
+                newGts =  gts.has(propName,  outside(predicateValue))
                 break
             case "between":
-                return ".has('${propName}',  between(${predicateValue}))"
+                newGts =  gts.has(propName,  between(predicateValue))
                 break
             case "within":
-                return ".has('${propName}',  within(${predicateValue}))"
+                newGts =  gts.has(propName,  within(predicateValue))
                 break
             case "without":
-                return ".has('${propName}',  without(${predicateValue}))"
+                newGts =  gts.has(propName,  without(predicateValue))
                 break
             default:
-                return ".has('${propName}',  eq(${predicateValue}))"
+                newGts =  gts.has(propName,  eq(predicateValue))
                 break
         }
+        return newGts
     }
 //    def applyPredicate( edgeOrVertex, String propName, String predicateText, Object propValue) {
 //        switch (predicateText) {

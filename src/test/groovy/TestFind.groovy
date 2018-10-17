@@ -53,9 +53,9 @@ class TestFind extends Specification {
     List<Vertex > arr = []
     List<Edge> edgeArr = []
 
-    org.apache.tinkerpop.gremlin.driver.Client client
+    //org.apache.tinkerpop.gremlin.driver.Client client
 
-    JanusGraphDatasourceFactory ddf
+    //JanusGraphDatasourceFactory ddf
 
     @Shared ExecutionContext ec
 
@@ -69,41 +69,33 @@ class TestFind extends Specification {
         logger.info("in TestFind, setupSpec")
         System.out.println("IN TestFind")
         ec = Moqui.getExecutionContext()
-        janusGraph = JanusGraphUtils.getDatabase(ec)
     }
 
     def setup() {
-        client = JanusGraphUtils.getClient(ec)
-        ddf = ec.entity.getDatasourceFactory("transactional_nosql") as JanusGraphDatasourceFactory
+        GraphTraversalSource g = JanusGraphUtils.getTraversalSource (ec) , gts
         org.apache.tinkerpop.gremlin.driver.ResultSet rs
         org.apache.tinkerpop.gremlin.structure.Vertex v
         org.apache.tinkerpop.gremlin.structure.Edge e
-        String gremlin
         (0..5).eachWithIndex{ int entry, int i ->
-            StringBuilder sb = StringBuilder.newInstance()
-            sb << "g.addV('vPartyContactInfo')"
-            sb << ".property('fullName', 'Create User ${i}')"
-            sb << ".property('emailAddress', 'createUser_${i}@test.com')"
-            sb << ".property('contactNumber', '801-40${i}-5111')"
-            sb << ".property('address1', '1151 ${i} Regent Court')"
-            sb << ".property('city', 'Orem')"
-            sb << ".property('stateProvinceGeoId', 'UT')"
-            sb << ".property('postalCode', '84057')"
-            sb << ".property('sales', ${new Float(i * 1000000)}f)"
-            sb << ".next()"
-            gremlin = sb.toString()
-            rs = client.submit(gremlin.toString())
-            v = rs.one().getVertex()
-            logger.info("in TestFind find_PartyContactInfo_list, i: ${i}, v: ${v}, gremlin: ${gremlin}")
+            v = g.addV('vPartyContactInfo')
+            .property('fullName', 'Create User ${i}')
+            .property('emailAddress', 'createUser_${i}@test.com')
+            .property('contactNumber', '801-40${i}-5111')
+            .property('address1', '1151 ${i} Regent Court')
+            .property('city', 'Orem')
+            .property('stateProvinceGeoId', 'UT')
+            .property('postalCode', '84057')
+            .property('sales', new Float(i * 1000000))
+            .next()
+            logger.info("in TestFind find_PartyContactInfo_list, i: ${i}, v: ${v}")
             arr[i] = v
         }
         String nme
         (1..5).eachWithIndex{ int entry, int i ->
             nme = "testEdge ${i}"
-            gremlin = "g.V('${arr[i].id()}').as('a').V('${arr[0].id()}').addE('testEdge').to('a').property('name', '${nme}').property('prorate', ${new Float(i * 10)}).next()"
-            rs = client.submit(gremlin.toString())
-            e = rs.one().getEdge()
-            logger.info("in TestFind find_PartyContactInfo_list, i: ${i}, edge: ${e}, gremlin: ${gremlin}")
+            e = g.V(arr[i].id()).as('a').V(arr[0].id()).addE('testEdge').to('a')
+                    .property('name', nme).property('prorate', new Float(i * 10)).next()
+            logger.info("in TestFind find_PartyContactInfo_list, i: ${i}, edge: ${e}")
             edgeArr << e
         }
 
@@ -142,42 +134,15 @@ class TestFind extends Specification {
     }
 
     def cleanup() {
-        String gremlin
+        GraphTraversalSource g = JanusGraphUtils.getTraversalSource (ec) , gts
         edgeArr.each {edge ->
-            gremlin = "g.E('${edge.id()}').drop()"
-            client.submit(gremlin)
+            g.E(edge.id()).drop()
         }
         arr.each {vrtx ->
-            gremlin = "g.V('${vrtx.id()}').drop()"
-            client.submit(gremlin)
+            g.V(vrtx.id()).drop()
         }
-        client.close()
-        client.close()
     }
 
-
-    def "find_PartyContactInfo_list"() {
-
-        setup:
-        //pci = ec.entity.makeValue("vPartyContactInfo")
-        //EntityValue pci
-
-        when:
-        JanusGraphEntityFind fnd = new JanusGraphEntityFind(ec)
-        Object id = arr[0].id()
-        def resultList = fnd.condition(id, "vPartyContactInfo", "testEdge", [["prorate", "gte", new Float(20.0)]], null).list()
-        logger.info("in TestFind, resultList: ${resultList}")
-        def resultList2 = fnd.condition(arr[0].id(), "vPartyContactInfo", "testEdge", [["prorate", "lte", new Float(40.0)]],
-                [["sales", "gte", new Float(3000000.0)]]).list()
-        logger.info("in TestFind, resultList2: ${resultList2}")
-
-        then:
-        assert resultList.size() >= 3
-        assert resultList2.size() == 2
-
-        cleanup:
-        return
-    }
 
     def "find_PartyContactInfo_one"() {
         setup:
@@ -195,5 +160,29 @@ class TestFind extends Specification {
         cleanup:
         return
     }
+
+    def "find_PartyContactInfo_list"() {
+
+        setup:
+        //pci = ec.entity.makeValue("vPartyContactInfo")
+        //EntityValue pci
+
+        when:
+        JanusGraphEntityFind fnd = new JanusGraphEntityFind(ec)
+        Object id = arr[0].id()
+        def resultList = fnd.condition(id, "vPartyContactInfo", "testEdge", [["prorate", "gte", new Float(20.0)]], null).list()
+        logger.info("in TestFind, resultList: ${resultList}")
+        def resultList2 = fnd.condition(arr[0].id(), "vPartyContactInfo", "testEdge", [["prorate", "lte", new Float(40.0)]],
+                [["sales", "gte", new Float(3000000.0)]]).list()
+        logger.info("in TestFind, resultList2: ${resultList2}")
+
+        then:
+        assert resultList && resultList.size() >= 3
+        assert resultList2 && resultList2.size() == 2
+
+        cleanup:
+        return
+    }
+
 
 }

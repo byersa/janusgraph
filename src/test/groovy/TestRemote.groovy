@@ -39,7 +39,7 @@ import org.apache.tinkerpop.gremlin.driver.remote.DriverRemoteConnection
 import org.apache.tinkerpop.gremlin.structure.io.gryo.GryoMapper
 import org.apache.tinkerpop.gremlin.driver.Client
 
-import org.moqui.addons.graph.JanusGraphUtils
+import org.moqui.addons.janusgraph.JanusGraphUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
