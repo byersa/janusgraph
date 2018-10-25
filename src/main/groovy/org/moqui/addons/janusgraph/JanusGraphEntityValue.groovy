@@ -272,7 +272,7 @@ class JanusGraphEntityValue extends EntityValueBase {
         Vertex v = this.getVertex()
         Object thisId = v.id()
         if (v) {
-            g.V(thisId).drop()
+            g.V(thisId).next().remove()
             this.setVertex(null)
         }
         if (!passedTraversalSource) {
