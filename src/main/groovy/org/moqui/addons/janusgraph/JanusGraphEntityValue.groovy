@@ -121,32 +121,16 @@ class JanusGraphEntityValue extends EntityValueBase {
         if (!g) {
             g = getTraversalSource()
         }
-        try {
         logger.info("in JGEntityValue::create, g: ${g}")
-        EntityDefinition ed = getEntityDefinition()
-        java.util.Date sameDate = new java.util.Date(new Timestamp(System.currentTimeMillis()).getTime())
-        String labelName = ed.getEntityNode().attribute("entity-name")
-        logger.info("in JGEntityValue::create, labelName: ${labelName}")
-        gts = g.addV(labelName)
-        List fieldNames = ed.getAllFieldNames()
-        logger.info("in JGEntityValue::create, fieldNames: ${fieldNames}")
-        EntityValue _this = this
-        VertexProperty vProp
-        Object val
-
-        long sameTime = sameDate.getTime()
-        fieldNames.each {fieldName ->
-            if (_this.get(fieldName)) {
-                val = _this.getDataValue(fieldName)
-                gts = gts.property(fieldName, val )
-                logger.info("fieldName: ${fieldName}, val: ${val}")
-            }
-        }
-        gts = gts.property('createdDate', sameTime)
-        gts = gts.property('lastUpdatedStamp', sameTime)
-        v2 = gts.next()
-        logger.info("in JGEntityValue::create, v2: ${v2}")
-        setVertex(v2)
+        try {
+            EntityDefinition ed = getEntityDefinition()
+            String labelName = ed.getEntityNode().attribute("entity-name")
+            logger.info("in JGEntityValue::create, labelName: ${labelName}")
+            Map <String,Object> vertexProperties = getValueMap()
+            logger.info("in JGEntityValue::create, vertexProperties: ${vertexProperties}")
+            v2 = JanusGraphUtils.storeVertex(null, labelName, vertexProperties, g, null)
+            logger.info("in JGEntityValue::create, v2: ${v2}")
+            setVertex(v2)
         } catch (Exception e) {
             logger.info("in JanusGraphEntityValue, exception: ${e.getMessage()}")
         }
@@ -156,50 +140,6 @@ class JanusGraphEntityValue extends EntityValueBase {
         }
         return this
     }
-
-//    public EntityValue create( org.apache.tinkerpop.gremlin.driver.Client passedClient) {
-//
-//        org.apache.tinkerpop.gremlin.driver.Client client = passedClient
-//        if (!client) {
-//            client = getClient()
-//        }
-//        //JanusGraphTransaction tx = janusGraph.buildTransaction().start()
-//        //ManagementSystem mgmt = janusGraph.openManagement()
-//        //StandardJanusGraphTx tx = mgmt.getWrappedTx()
-//        EntityDefinition ed = getEntityDefinition()
-//        java.util.Date sameDate = new java.util.Date(new Timestamp(System.currentTimeMillis()).getTime())
-//        String labelName = ed.getEntityNode().attribute("entity-name")
-//        StringBuilder gremlin = StringBuilder.newInstance()
-//        gremlin << "g.addV('${labelName}')"
-//        List fieldNames = ed.getAllFieldNames()
-//        EntityValue _this = this
-//        VertexProperty vProp
-//        Object val
-//        fieldNames.each {fieldName ->
-//            if (_this.get(fieldName)) {
-//                gremlin << ".property('${fieldName}', "
-//                val = _this.getDataValue(fieldName)
-//                if (val instanceof String) {
-//                    gremlin << "'${val}'"
-//                } else {
-//                    gremlin << "${val}"
-//                }
-//                logger.info("fieldName: ${fieldName}")
-//                gremlin << ")"
-//            }
-//        }
-//        gremlin << ".property('createdDate', ${sameDate.getTime()})"
-//        gremlin << ".property('lastUpdatedStamp', ${sameDate.getTime()})"
-//        gremlin << ".next()"
-//        logger.info("in JGEntityValue::create, gremlin: ${gremlin.toString}")
-//        org.apache.tinkerpop.gremlin.driver.ResultSet results = client.submit(gremlin.toString());
-//        org.apache.tinkerpop.gremlin.structure.Vertex v = results.one().getVertex();
-//        setVertex(v)
-//        if (!passedClient) {
-//            client.close()
-//        }
-//        return this
-//    }
 
     public EntityValue update( ) {
         this.update(null)
@@ -212,43 +152,18 @@ class JanusGraphEntityValue extends EntityValueBase {
             g = getTraversalSource()
         }
 
-        GraphTraversal gts
-        Object id, thisId
         org.apache.tinkerpop.gremlin.structure.Vertex v, v2
 
         try {
-        EntityDefinition ed = getEntityDefinition()
-        java.util.Date sameDate = new java.util.Date(new Timestamp(System.currentTimeMillis()).getTime())
-        long sameTime = sameDate.getTime()
-        v = this.getVertex()
-        thisId = v.id()
-        logger.info("in JGEntityValue::update, thisId: ${thisId}")
-        gts = g.V(thisId)
-        List fieldNames = ed.getAllFieldNames()
-        EntityValue _this = this
-        VertexProperty vProp
-        Object val, existingVal
-        Object props = v.properties()
-        this.set('lastUpdatedStamp', sameTime)
-        fieldNames.each {fieldName ->
-            logger.info("in JGEntityValue::update, fieldName: ${fieldName}")
-            existingVal = v.property(fieldName)
-            logger.info("in JGEntityValue::update, existingVal: ${existingVal}")
-            val = _this.get(fieldName)
-            logger.info("in JGEntityValue::update,  val: ${val}")
-            if (existingVal != val) {
-                if (existingVal.isPresent()) {
-                    gts.properties(fieldName).drop()
-                }
-                val = _this.getDataValue(fieldName)
-                logger.info("fieldName: ${fieldName}, val: ${val}")
-                if (val) {
-                    v.property(fieldName, val )
-                }
-            }
-        }
-        logger.info("in JGEntityValue::update, v: ${v}, emailAddress: ${v.property('emailAddress').value()}")
-        //setVertex(v)
+            EntityDefinition ed = getEntityDefinition()
+            String labelName = ed.getEntityNode().attribute("entity-name")
+            logger.info("in JGEntityValue::update, labelName: ${labelName}")
+            Map <String,Object> vertexProperties = getValueMap()
+            logger.info("in JGEntityValue::update, vertexProperties: ${vertexProperties}")
+            v = this.getVertex()
+            logger.info("in JGEntityValue::update, v: ${v}")
+            v2 = JanusGraphUtils.storeVertex(v, labelName, vertexProperties, g, null)
+            logger.info("in JGEntityValue::update, v2: ${v2}, emailAddress: ${v.property('emailAddress').value()}")
         } catch (Exception e) {
             String msg = e.getMessage()
             logger.info("in TestCRUD, update_PartyContactInfo, exception: ${msg}")
@@ -363,8 +278,18 @@ class JanusGraphEntityValue extends EntityValueBase {
     }
 
     EntityValue setAll(Map <String,Object> fieldMap) {
-        EntityValue entityValue = super.setAll(fieldMap)
-        return entityValue
+        logger.info("in JGEntityValue::setAll, fieldMap: ${fieldMap}")
+        //EntityValue entityValue = super.setAll(fieldMap)
+        fieldMap.each{fieldName, val ->
+            putNoCheck(fieldName, val)
+        }
+        logger.info("in JGEntityValue::setAll, valueMap: ${getValueMap()}")
+        return this
+    }
+
+    public Object put(final String name, Object value) {
+        //if (!getEntityDefinition().isField(name)) throw new EntityException("The field name " + name + " is not valid for entity " + entityName);
+        return putNoCheck(name, value);
     }
 
     void set(fieldName, value) {

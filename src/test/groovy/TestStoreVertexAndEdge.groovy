@@ -60,6 +60,9 @@ class TestStoreVertexAndEdge extends Specification {
     @Shared
     Timestamp nowTimestamp
 
+    @Shared
+    Map <String,Object> retMap
+
     //org.apache.tinkerpop.gremlin.driver.Client client
 
     def setupSpec() {
@@ -100,7 +103,7 @@ class TestStoreVertexAndEdge extends Specification {
 
     def cleanupSpec() {
         //janusGraph.close()
-        ec.destroy()
+        ec && ec.destroy()
         return
     }
 
@@ -122,7 +125,7 @@ class TestStoreVertexAndEdge extends Specification {
         assert v
     }
 
-    def "test_storeVertexAndEdge"() {
+    def "test_storeVertexAndEdge_create"() {
 
         setup:
         GraphTraversalSource g = JanusGraphUtils.getTraversalSource (ec)
@@ -130,23 +133,27 @@ class TestStoreVertexAndEdge extends Specification {
         when:
         pci = pci.create()
         logger.info("in test_storeVertexAndEdge, pci (3): ${pci}")
+        logger.info("in test_storeVertexAndEdge, pci (4)pci.getVertex: ${pci.getVertex()}")
         Map<String,Object> edgeProps = ["statusId":"pPPActive",
-                                        "fromRoleTypeId": "agent",
-                                        "createdDate": nowTimestamp.getTime(),
-                                        "lastUpdatedStamp": nowTimestamp.getTime()
+                                        "fromRoleTypeId": "agent"
+                                        //"createdDate": nowTimestamp.getTime(),
+                                        //"lastUpdatedStamp": nowTimestamp.getTime()
         ]
 
         Map<String,Object> vertexProps = [
-                                        "createdDate": nowTimestamp.getTime(),
-                                        "lastUpdatedStamp": nowTimestamp.getTime(),
-                                        "label": 'vPartyContactInfo'
+                //"createdDate": nowTimestamp.getTime(),
+                //"lastUpdatedStamp": nowTimestamp.getTime(),
+                "address1": '1151b Center St',
+                "emailAddress": '1151b@test.com',
+                "_label": 'vPartyContactInfo'
         ]
 
-        EntityValue testEntityValue = JanusGraphUtils.storeVertexAndEdge(
+        retMap = JanusGraphUtils.storeVertexAndEdge(
                 pci.getVertex(), null, "agent-client", edgeProps, vertexProps, null, ec
         )
 
-        org.apache.tinkerpop.gremlin.structure.Vertex vrtx = g.V(testEntityValue.getVertex().id()).next()
+        logger.info("in TestStoreVertexAndEdge,  retMap: ${retMap}")
+        org.apache.tinkerpop.gremlin.structure.Vertex vrtx = retMap.vertex
         logger.info("in TestStoreVertexAndEdge,  vrtx: ${vrtx}")
 
         then:
@@ -154,6 +161,51 @@ class TestStoreVertexAndEdge extends Specification {
         return
 
         cleanup:
+        g.close()
+    }
+
+    def "test_storeVertexAndEdge_update"() {
+
+        setup:
+        GraphTraversalSource g = JanusGraphUtils.getTraversalSource (ec)
+        String emailAddr
+
+        when:
+        pci = retMap.entity
+        logger.info("in test_storeVertexAndEdge_update, pci (5): ${pci}")
+        logger.info("in test_storeVertexAndEdge_update, pci (6)pci.getVertex: ${pci.getVertex()}")
+        String newEmailAddr = '1151c@test.com'
+        Map<String,Object> edgeProps = ["statusId":"pPPInactive2",
+                                        "fromRoleTypeId": "buyer2"
+                                        //"createdDate": nowTimestamp.getTime(),
+                                        //"lastUpdatedStamp": nowTimestamp.getTime()
+        ]
+
+        Map<String,Object> vertexProps = [
+                                        //"createdDate": nowTimestamp.getTime(),
+                                        //"lastUpdatedStamp": nowTimestamp.getTime(),
+                                        "address1": '1151c Center St',
+                                        "emailAddress": newEmailAddr
+        ]
+
+        org.apache.tinkerpop.gremlin.structure.Vertex toVertex = retMap.vertex
+        EntityValue toEntityValue = retMap.entity
+
+        retMap = JanusGraphUtils.storeVertexAndEdge(
+                pci.getVertex(), toEntityValue, "agent-client", edgeProps, vertexProps, g, ec
+        )
+
+        logger.info("in TestStoreVertexAndEdge_update,  retMap: ${retMap}")
+        org.apache.tinkerpop.gremlin.structure.Vertex vrtx = retMap.vertex
+        logger.info("in TestStoreVertexAndEdge_update,  vrtx: ${vrtx}")
+        emailAddr = vrtx.property('emailAddress').value()
+        logger.info("in TestStoreVertexAndEdge_update,  emailAddr: ${emailAddr},  newEmailAddr: ${newEmailAddr}")
+        then:
+        assert emailAddr == newEmailAddr
+        return
+
+        cleanup:
+        pci.getVertex().remove()
         g.close()
     }
 

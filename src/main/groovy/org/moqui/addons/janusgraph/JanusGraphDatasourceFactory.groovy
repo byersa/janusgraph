@@ -322,8 +322,8 @@ class JanusGraphDatasourceFactory implements EntityDatasourceFactory {
     boolean checkTableExists(java.lang.String s) {return null}
 
     void destroy() {
-        super.destroy()
-        graph.close()
+        //super.destroy()
+        janusGraph.close()
         return
     }
 }
